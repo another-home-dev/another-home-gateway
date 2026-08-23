@@ -5,9 +5,9 @@ import axios from 'axios';
 @Injectable()
 export class ProxyMiddleware implements NestMiddleware {
     private routes = [
-        { prefix: '/api/v1/accommodation', target: 'http://localhost:4001' },
-        { prefix: '/api/v1/operations', target: 'http://localhost:4002' },
-        { prefix: '/api/v1/finance', target: 'http://localhost:4003' },
+        { prefix: '/api/v1/accommodation', target: process.env.ACCOMMODATION_SERVICE_URL ?? 'http://accommodation:4001' },
+        { prefix: '/api/v1/operations', target: process.env.OPERATIONS_SERVICE_URL ?? 'http://operations:4002' },
+        { prefix: '/api/v1/finance', target: process.env.FINANCE_SERVICE_URL ?? 'http://finance:4003' },
     ];
 
     async use(req: Request, res: Response, next: NextFunction) {
