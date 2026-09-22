@@ -4,11 +4,13 @@ import { AppService } from './app.service';
 import { AuthMiddleware } from './auth.middleware';
 import { ProxyMiddleware } from './proxy.middleware';
 import { AdminModule } from './admin/admin.module';
+import { DiscoveryModule } from './discovery/discovery.module';
+import { DocsModule } from './docs/docs.module';
 
 @Module({
-  imports: [AdminModule],
+  imports: [AdminModule, DiscoveryModule, DocsModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthMiddleware, ProxyMiddleware],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
