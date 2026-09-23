@@ -24,7 +24,14 @@ export class AdminService {
             `${this.baseUrl}/oauth2/token`,
             new URLSearchParams({
                 grant_type: 'client_credentials',
-                scope: 'internal_user_mgt_create internal_user_mgt_view internal_org_role_mgt_update internal_org_role_mgt_view',
+                // Note: the SCIM2 Roles v2 API (/scim2/v2/Roles/{id}, used below to list and
+                // assign wardens) is authorized by the internal_role_mgt_* scopes. The
+                // internal_org_role_mgt_* scopes look like the right name but grant a
+                // different permission - a token with only those is issued fine (200) but
+                // every call to /scim2/v2/Roles/{id} then 403s. Verified directly against
+                // the tenant: internal_role_mgt_view/_update returns 200, the org_ variant
+                // returns 403 with the same role ID and same call shape.
+                scope: 'internal_user_mgt_create internal_user_mgt_view internal_role_mgt_view internal_role_mgt_update',
             }),
             {
                 headers: {
