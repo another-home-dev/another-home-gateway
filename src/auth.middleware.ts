@@ -54,9 +54,13 @@ export class AuthMiddleware implements NestMiddleware {
 
             const userId = verifiedPayload.sub;
             const roles = verifiedPayload.roles || verifiedPayload['http://wso2.org/claims/role'] || [];
+            const email = verifiedPayload.email;
 
             req.headers['x-user-id'] = userId;
             req.headers['x-user-roles'] = Array.isArray(roles) ? roles.join(',') : String(roles);
+            if (email) {
+                req.headers['x-user-email'] = email;
+            }
 
             delete req.headers.authorization;
 

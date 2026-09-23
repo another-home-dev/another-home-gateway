@@ -18,6 +18,7 @@ export class ProxyMiddleware implements NestMiddleware {
         { prefix: '/api/v1/accommodation', serviceName: 'accommodation', fallback: process.env.ACCOMMODATION_SERVICE_URL ?? 'http://accommodation:4001' },
         { prefix: '/api/v1/operations', serviceName: 'operations', fallback: process.env.OPERATIONS_SERVICE_URL ?? 'http://operations:4002' },
         { prefix: '/api/v1/finance', serviceName: 'finance', fallback: process.env.FINANCE_SERVICE_URL ?? 'http://finance:4003' },
+        { prefix: '/api/v1/notifications', serviceName: 'notification', fallback: process.env.NOTIFICATION_SERVICE_URL ?? 'http://notification:4004' },
     ];
 
     constructor(private readonly discovery: DiscoveryService) {}
