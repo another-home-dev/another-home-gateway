@@ -1,0 +1,56 @@
+# CI/CD for the gateway service: test -> build -> push -> roll out to GKE.
+# Triggered by pushes to main (see another-home-infra/README.md for the trigger
+# setup). The Kubernetes config itself (env vars, resources, ingress) is deployed
+# from the another-home-infra repo; this pipeline only changes the image.
+substitutions:
+  _REGION: asia-southeast1
+  _CLUSTER: another-home
+  _NAMESPACE: another-home
+  _IMAGE: asia-southeast1-docker.pkg.dev/${PROJECT_ID}/another-home-repo/another-home-gateway
+  _DEPLOYMENT: gateway
+
+steps:
+  - id: test
+    name: node:20
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        if [ -f package-lock.json ]; then npm ci; else npm install; fi
+        npm test -- --ci --passWithNoTests
+
+  # Tag images with the commit so every deploy is traceable and can be rolled
+  # back to. Manual `gcloud builds submit` runs have no commit, so they get the
+  # build ID instead.
+  - id: build
+    name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        SHA="$SHORT_SHA"
+        TAG="$${SHA:-manual-$BUILD_ID}"
+        TAG="$${TAG:0:40}"
+        echo "$$TAG" > /workspace/image-tag
+        docker build -t "${_IMAGE}:$$TAG" -t "${_IMAGE}:latest" .
+
+  - id: push
+    name: gcr.io/cloud-builders/docker
+    args: [push, --all-tags, "${_IMAGE}"]
+
+  - id: deploy
+    name: gcr.io/cloud-builders/kubectl
+    entrypoint: bash
+    args:
+      - -ceu
+      - |
+        TAG=$$(cat /workspace/image-tag)
+        gcloud container clusters get-credentials ${_CLUSTER} --region ${_REGION}
+        kubectl -n ${_NAMESPACE} set image deployment/${_DEPLOYMENT} ${_DEPLOYMENT}="${_IMAGE}:$$TAG"
+        kubectl -n ${_NAMESPACE} rollout status deployment/${_DEPLOYMENT} --timeout=5m
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  # Lets _IMAGE's default refer to ${PROJECT_ID}.
+  dynamicSubstitutions: true
+timeout: 1800s
