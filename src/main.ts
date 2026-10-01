@@ -1,12 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { Request, Response, NextFunction } from 'express';
 import * as swaggerUi from 'swagger-ui-express';
 import { AppModule } from './app.module';
 import { DocsAggregatorService } from './docs/docs-aggregator.service';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  // Proxied bodies can carry base64 photos (maintenance requests); Express's default is 100kb.
+  app.useBodyParser('json', { limit: '5mb' });
   app.useGlobalPipes(new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
